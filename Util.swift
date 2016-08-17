@@ -59,5 +59,11 @@ struct Util {
         return NSFileManager.defaultManager().fileExistsAtPath(path)
     }
     
+    static func setupCleanRoomLogger() {
+        setenv("XcodeColors", "YES", 0);
+        let formatter = XcodeLogFormatter(timestampStyle: .`default`, severityStyle: .xcode, delimiterStyle: nil, showCallSite: true, showCallingThread: false, colorizer: nil)
+        let config = XcodeLogConfiguration(minimumSeverity: .verbose, colorTable: HulkColorTable(), formatter: formatter)
+        Log.enable(configuration: config)
+    }
 }
 
