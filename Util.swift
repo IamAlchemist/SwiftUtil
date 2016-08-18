@@ -26,12 +26,12 @@ struct HulkColorTable : ColorTable {
     }
 }
 
-public struct MWUtil {
-    public static func applicationDocumentsDirectory() -> NSURL? {
+struct MWUtil {
+    static func applicationDocumentsDirectory() -> NSURL? {
         return NSFileManager.defaultManager().URLsForDirectory(.DocumentDirectory, inDomains: .UserDomainMask).last
     }
     
-    public static func createDirectory(baseURL: NSURL, path: String) -> Bool {
+    static func createDirectory(baseURL: NSURL, path: String) -> Bool {
         do {
             try NSFileManager.defaultManager().createDirectoryAtURL(baseURL.URLByAppendingPathComponent(path), withIntermediateDirectories: true, attributes: nil)
             return true
@@ -43,7 +43,7 @@ public struct MWUtil {
         return false
     }
     
-    public static func createDirectory(url: NSURL) -> Bool {
+    static func createDirectory(url: NSURL) -> Bool {
         do {
             try NSFileManager.defaultManager().createDirectoryAtURL(url, withIntermediateDirectories: true, attributes: nil)
             return true
@@ -55,11 +55,11 @@ public struct MWUtil {
         return false
     }
     
-    public static func directoryExists(path: String) -> Bool {
+    static func directoryExists(path: String) -> Bool {
         return NSFileManager.defaultManager().fileExistsAtPath(path)
     }
     
-    public static func setupCleanRoomLogger() {
+    static func setupCleanRoomLogger() {
         setenv("XcodeColors", "YES", 0);
         let formatter = XcodeLogFormatter(timestampStyle: .`default`, severityStyle: .xcode, delimiterStyle: nil, showCallSite: true, showCallingThread: false, colorizer: nil)
         let config = XcodeLogConfiguration(minimumSeverity: .verbose, colorTable: HulkColorTable(), formatter: formatter)
