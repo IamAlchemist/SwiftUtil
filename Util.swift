@@ -31,18 +31,6 @@ struct MWUtil {
         return NSFileManager.defaultManager().URLsForDirectory(.DocumentDirectory, inDomains: .UserDomainMask).last
     }
     
-    static func createDirectory(baseURL: NSURL, path: String) -> Bool {
-        do {
-            try NSFileManager.defaultManager().createDirectoryAtURL(baseURL.URLByAppendingPathComponent(path), withIntermediateDirectories: true, attributes: nil)
-            return true
-        }
-        catch let error as NSError {
-            Log.error?.message("can't create downloads folder : \(error.localizedDescription)")
-        }
-        
-        return false
-    }
-    
     static func createDirectory(url: NSURL) -> Bool {
         do {
             try NSFileManager.defaultManager().createDirectoryAtURL(url, withIntermediateDirectories: true, attributes: nil)
@@ -57,6 +45,21 @@ struct MWUtil {
     
     static func directoryExists(path: String) -> Bool {
         return NSFileManager.defaultManager().fileExistsAtPath(path)
+    }
+    
+    static func removeDirectory(path: NSURL) {
+        let fileManager = NSFileManager.defaultManager()
+        do {
+            let contents = try fileManager.contentsOfDirectoryAtURL(path, includingPropertiesForKeys: nil, options: [])
+            for content in contents {
+                try fileManager.removeItemAtURL(content)
+            }
+            
+            try fileManager.removeItemAtURL(path)
+        }
+        catch let error as NSError {
+            Log.error?.message("could not delete : \(error.localizedDescription)")
+        }
     }
     
     static func setupCleanRoomLogger() {
