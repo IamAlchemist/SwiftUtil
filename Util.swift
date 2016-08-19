@@ -27,8 +27,8 @@ struct HulkColorTable : ColorTable {
 }
 
 struct MWUtil {
-    static func applicationDocumentsDirectory() -> NSURL? {
-        return NSFileManager.defaultManager().URLsForDirectory(.DocumentDirectory, inDomains: .UserDomainMask).last
+    static func applicationDocumentsDirectory() -> NSURL {
+        return NSFileManager.defaultManager().URLsForDirectory(.DocumentDirectory, inDomains: .UserDomainMask).last!
     }
     
     static func createDirectory(url: NSURL) -> Bool {
