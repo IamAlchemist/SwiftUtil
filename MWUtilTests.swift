@@ -7,7 +7,7 @@
 //
 
 import XCTest
-@testable import SwiftUtilExample
+@testable import H5Cache
 
 class SwiftUtilExampleTests: XCTestCase {
     let testDirectory = MWUtil.applicationDocumentsDirectory().URLByAppendingPathComponent("Test")
