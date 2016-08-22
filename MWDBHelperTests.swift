@@ -14,6 +14,8 @@ import CleanroomLogger
 
 class MWDBHelperTests: XCTestCase {
     
+    let entityName = "TestItem"
+    
     lazy var manageObjectContext: NSManagedObjectContext = {
         (UIApplication.sharedApplication().delegate as! AppDelegate).managedObjectContext
     }()
@@ -32,12 +34,13 @@ class MWDBHelperTests: XCTestCase {
         dbHelper.removeAllEntity("TestItem")
     }
     
-    func testRemoveAllEntity() {
+    func testRemoveAllEntityConcurrent() {
         for _ in 0..<3 {
             insertOneItem()
         }
         
-        let entityName = "TestItem"
+        
+
         let count = dbHelper.countForEntity(entityName)
         XCTAssertNotEqual(count, 0)
         
@@ -46,6 +49,36 @@ class MWDBHelperTests: XCTestCase {
         XCTAssertEqual(count2, 0)
     }
     
+    func testRemoveAllEntity() {
+        for _ in 0..<3 {
+            insertOneItem()
+        }
+        
+        let count = dbHelper.countForEntity(entityName)
+        XCTAssertNotEqual(count, 0)
+        
+        dbHelper.removeAllEntity(entityName)
+        let count2 = dbHelper.countForEntity(entityName)
+        XCTAssertEqual(count2, 0)
+    }
+    
+    func testCountForEntityConcurrent() {
+        insertOneItem()
+        
+        let expectation = expectationWithDescription("testCountForEntityConcurrent1")
+        dbHelper.countForEntity(entityName) { (count, error) in
+            XCTAssertNil(error)
+            XCTAssertEqual(count, 1)
+            expectation.fulfill()
+        }
+        
+        waitForExpectationsWithTimeout(2) { (error) in
+            if let error = error {
+                print("Error: \(error.localizedDescription)")
+            }
+        }
+    }
+
     func testCountForEntity() {
         insertOneItem()
         
@@ -60,14 +93,22 @@ class MWDBHelperTests: XCTestCase {
         XCTAssertEqual(count2, 3)
     }
     
-    func insertOneItem() {
-        let newItem = NSEntityDescription.insertNewObjectForEntityForName("TestItem", inManagedObjectContext: manageObjectContext) as! TestItem
-        newItem.name = "hello"
-        do {
-            try manageObjectContext.save()
+    func testFetchEntityConcurrent() {
+        insertOneItem()
+        
+        let expectation = expectationWithDescription("Test Fetch Entity Concurrent")
+        
+        dbHelper.fetchEntity(entityName) { (items, error) in
+            XCTAssertNotNil(items)
+            XCTAssertNil(error)
+            XCTAssertTrue(items!.count != 0)
+            expectation.fulfill()
         }
-        catch let error as NSError {
-            print("insert fail \(error.localizedDescription)")
+        
+        waitForExpectationsWithTimeout(2) { (error) in
+            if let error = error {
+                print("wait error: \(error.localizedDescription)")
+            }
         }
     }
     
@@ -77,6 +118,24 @@ class MWDBHelperTests: XCTestCase {
         let items = dbHelper.fetchEntity("TestItem")
         XCTAssertNotNil(items)
         XCTAssertTrue(items!.count != 0)
+    }
+    
+    func testFetchOneEntityConcurrent() {
+        insertOneItem()
+        
+        let expectation = expectationWithDescription("Test Fetch One Entity Concurrent")
+        
+        dbHelper.fetchOneEntity(entityName) { (item, error) in
+            XCTAssertNil(error)
+            XCTAssertNotNil(item)
+            expectation.fulfill()
+        }
+        
+        waitForExpectationsWithTimeout(2) { (error) in
+            if let error = error {
+                print("wait error: \(error.localizedDescription)")
+            }
+        }
     }
     
     func testFetchOneEntity() {
@@ -127,5 +186,18 @@ class MWDBHelperTests: XCTestCase {
             // Put the code you want to measure the time of here.
         }
     }
+    
+    // MARK: - private    
+    func insertOneItem() {
+        let newItem = NSEntityDescription.insertNewObjectForEntityForName("TestItem", inManagedObjectContext: manageObjectContext) as! TestItem
+        newItem.name = "hello"
+        do {
+            try manageObjectContext.save()
+        }
+        catch let error as NSError {
+            print("insert fail \(error.localizedDescription)")
+        }
+    }
+    
     
 }

@@ -67,11 +67,47 @@ public struct MWDBHelper {
         return result
     }
     
-    public func fetchEntity(entityName: String,
+    public func fetchEntity<T: NSManagedObject>(entityName: String,
                             predicate: NSPredicate? = nil,
                             sortDescriptor: NSSortDescriptor? = nil,
                             pageSize: Int = 0,
-                            pageIndex: Int = 0) -> [NSManagedObject]? {
+                            pageIndex: Int = 0,
+                            completion: (items: [T]?, error: NSError?)->Void) {
+        
+        let fetchRequest = NSFetchRequest(entityName: entityName)
+        fetchRequest.returnsObjectsAsFaults = false
+        fetchRequest.predicate = predicate
+        fetchRequest.sortDescriptors = sortDescriptor == nil ? nil : [sortDescriptor!]
+        
+        if pageSize > 0 {
+            fetchRequest.fetchLimit = pageSize
+            fetchRequest.fetchOffset = pageSize * pageIndex
+        }
+        
+        let moc = currentManagedObjectContext
+        moc.performBlock {
+            do {
+                let items = try moc.executeFetchRequest(fetchRequest)
+                if let result = items as? [T] {
+                    completion(items: result, error: nil)
+                }
+                else {
+                    let error = self.castError(NSStringFromClass(T))
+                    completion(items: nil, error: error)
+                }
+                
+            }
+            catch let error as NSError {
+                print("concurrent fetch fail, \(error.localizedDescription)")
+            }
+        }
+    }
+    
+    public func fetchEntity<T: NSManagedObject>(entityName: String,
+                            predicate: NSPredicate? = nil,
+                            sortDescriptor: NSSortDescriptor? = nil,
+                            pageSize: Int = 0,
+                            pageIndex: Int = 0) -> [T]? {
         
         let fetchRequest = NSFetchRequest(entityName: entityName)
         fetchRequest.returnsObjectsAsFaults = false
@@ -84,7 +120,7 @@ public struct MWDBHelper {
         }
         
         do {
-            let items = try managedObjectContext.executeFetchRequest(fetchRequest) as? [NSManagedObject]
+            let items = try managedObjectContext.executeFetchRequest(fetchRequest) as? [T]
             return items
         }
         catch let error as NSError {
@@ -92,6 +128,34 @@ public struct MWDBHelper {
         }
         
         return nil
+    }
+    
+    public func fetchOneEntity<T: NSManagedObject>(entityName: String,
+                               predicate: NSPredicate? = nil,
+                               sort sortDescriptor: NSSortDescriptor? = nil,
+                                    completion: (item: T?, error: NSError?)->Void ) {
+        
+        let fetchRequest = NSFetchRequest(entityName: entityName)
+        fetchRequest.returnsObjectsAsFaults = false
+        fetchRequest.predicate = predicate
+        fetchRequest.sortDescriptors = (sortDescriptor != nil ? [sortDescriptor!] : nil)
+        fetchRequest.fetchLimit = 1
+        
+        let moc = currentManagedObjectContext
+        moc.performBlock { 
+            do {
+                let item = try moc.executeFetchRequest(fetchRequest)
+                if let results = item as? [T], result = results.first {
+                    completion(item: result, error: nil)
+                }
+                else {
+                    completion(item: nil, error: self.castError(NSStringFromClass(T)))
+                }
+            }
+            catch let error as NSError {
+                completion(item: nil, error: error)
+            }
+        }
     }
     
     public func fetchOneEntity<T: NSManagedObject>(entityName: String,
@@ -113,6 +177,21 @@ public struct MWDBHelper {
             return nil
         }
     }
+    
+//    public func removeAllEntity(entityName: String, predicate: NSPredicate? = nil) {
+//        guard let items = fetchEntity(entityName, predicate: predicate) else { return }
+//        
+//        for item in items {
+//            managedObjectContext.deleteObject(item)
+//        }
+//        
+//        do {
+//            try managedObjectContext.save()
+//        }
+//        catch let error as NSError {
+//            print("save fail \(error.localizedDescription)")
+//        }
+//    }
     
     public func removeAllEntity(entityName: String, predicate: NSPredicate? = nil) {
         guard let items = fetchEntity(entityName, predicate: predicate) else { return }
@@ -151,6 +230,12 @@ public struct MWDBHelper {
             
             return true
         }
+    }
+    
+    private func castError(className: String) -> NSError {
+        let desc = NSLocalizedString("Cast to \(className) was unsuccessful.", comment: "Cast Error")
+        let userInfo = [NSLocalizedDescriptionKey: desc]
+        return NSError(domain: "DBHelperDomain", code: -1, userInfo: userInfo)
     }
 }
 
