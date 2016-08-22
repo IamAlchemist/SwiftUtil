@@ -12,9 +12,45 @@ import CoreData
 
 public struct MWDBHelper {
     let managedObjectContext: NSManagedObjectContext
+    let mergePolicy: AnyObject
     
-    public init(manageObjectContext: NSManagedObjectContext){
+    private let MOC_KEY = "H5CACHE_MOC_KEY"
+    var currentManagedObjectContext: NSManagedObjectContext {
+        get {
+            let thisThread = NSThread.currentThread()
+            
+            if thisThread == NSThread.mainThread() {
+                return managedObjectContext
+            }
+            
+            if let threadMOC = thisThread.threadDictionary.objectForKey(MOC_KEY) as? NSManagedObjectContext {
+                return threadMOC
+            }
+            else {
+                let threadMOC = NSManagedObjectContext(concurrencyType: .PrivateQueueConcurrencyType)
+                thisThread.threadDictionary.setObject(threadMOC, forKey: MOC_KEY)
+                threadMOC.parentContext = managedObjectContext
+                
+                return threadMOC
+            }
+        }
+    }
+    
+    public init(manageObjectContext: NSManagedObjectContext, mergePolicy: AnyObject = NSMergeByPropertyObjectTrumpMergePolicy){
         self.managedObjectContext = manageObjectContext
+        self.mergePolicy = mergePolicy
+    }
+    
+    public func countForEntity(entityName: String, predicate: NSPredicate? = nil, completion: (count: Int, error: NSError?)->Void) {
+        let fetchRequest = NSFetchRequest(entityName: entityName)
+        fetchRequest.predicate = predicate
+        
+        let moc = currentManagedObjectContext
+        moc.performBlock {
+            var error: NSError? = nil
+            let result = moc.countForFetchRequest(fetchRequest, error: &error)
+            completion(count: result, error: error)
+        }
     }
     
     public func countForEntity(entityName: String, predicate: NSPredicate? = nil) -> Int? {
@@ -58,7 +94,10 @@ public struct MWDBHelper {
         return nil
     }
     
-    public func fetchOneEntity<T: NSManagedObject>(entityName: String, predicate: NSPredicate? = nil, sort sortDescriptor: NSSortDescriptor? = nil ) -> T? {
+    public func fetchOneEntity<T: NSManagedObject>(entityName: String,
+                               predicate: NSPredicate? = nil,
+                               sort sortDescriptor: NSSortDescriptor? = nil ) -> T? {
+        
         let fetchRequest = NSFetchRequest(entityName: entityName)
         fetchRequest.returnsObjectsAsFaults = false
         fetchRequest.predicate = predicate
