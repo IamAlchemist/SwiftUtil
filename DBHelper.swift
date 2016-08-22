@@ -178,33 +178,52 @@ public struct MWDBHelper {
         }
     }
     
-//    public func removeAllEntity(entityName: String, predicate: NSPredicate? = nil) {
-//        guard let items = fetchEntity(entityName, predicate: predicate) else { return }
-//        
-//        for item in items {
-//            managedObjectContext.deleteObject(item)
-//        }
-//        
-//        do {
-//            try managedObjectContext.save()
-//        }
-//        catch let error as NSError {
-//            print("save fail \(error.localizedDescription)")
-//        }
-//    }
+    public func removeAllEntity(entityName: String,
+                                predicate: NSPredicate? = nil,
+                                completion: (error: NSError?)->Void) {
+        
+        let moc = currentManagedObjectContext
+        fetchEntity(entityName, predicate: predicate) { (items, error) in
+            
+            guard let items = items else { completion(error: nil); return }
+            
+            for item in items {
+                moc.deleteObject(item)
+            }
+            
+            self.saveThreadContext(moc, completion: completion)
+        }
+    }
     
-    public func removeAllEntity(entityName: String, predicate: NSPredicate? = nil) {
-        guard let items = fetchEntity(entityName, predicate: predicate) else { return }
+    public func removeAllEntity(entityName: String, predicate: NSPredicate? = nil) -> Bool {
+        guard let items = fetchEntity(entityName, predicate: predicate) else { return true }
         
         for item in items {
             managedObjectContext.deleteObject(item)
         }
         
-        do {
-            try managedObjectContext.save()
-        }
-        catch let error as NSError {
-            print("save fail \(error.localizedDescription)")
+        return saveContext()
+    }
+    
+    public func insertOrUpdateEntity<T: NSManagedObject>(entityName: String,
+                                     predicate: NSPredicate,
+                                     itemHandler: ((item: T) -> Void),
+                                     completion: (error: NSError?)->Void) {
+        
+        let moc = currentManagedObjectContext
+        
+        fetchOneEntity(entityName) { (item:T?, error) in
+            if let item = item {
+                itemHandler(item: item)
+                self.saveThreadContext(moc, completion: completion)
+            }
+            else {
+                guard let newItem = NSEntityDescription.insertNewObjectForEntityForName(entityName, inManagedObjectContext: moc) as? T
+                    else { completion(error: self.castError(NSStringFromClass(T))); return }
+                itemHandler(item: newItem)
+                
+                self.saveThreadContext(moc, completion: completion)
+            }
         }
     }
     
@@ -212,7 +231,7 @@ public struct MWDBHelper {
         
         if let existItem: T = fetchOneEntity(entityName, predicate: predicate) {
             itemHandler(item: existItem)
-            return true
+            return saveContext()
         }
         else {
             guard let newItem = NSEntityDescription.insertNewObjectForEntityForName(entityName, inManagedObjectContext: managedObjectContext) as? T
@@ -220,15 +239,46 @@ public struct MWDBHelper {
             
             itemHandler(item: newItem)
             
-            do {
-                try managedObjectContext.save()
-            }
-            catch let error as NSError {
-                print("save failed \(error.localizedDescription)")
-                return false
+            return saveContext()
+        }
+    }
+    
+    public func saveContext () -> Bool {
+        if !managedObjectContext.hasChanges {
+            return true
+        }
+        
+        do {
+            try managedObjectContext.save()
+            return true
+        } catch {
+            // Replace this implementation with code to handle the error appropriately.
+            // abort() causes the application to generate a crash log and terminate. You should not use this function in a shipping application, although it may be useful during development.
+            let nserror = error as NSError
+            NSLog("Unresolved error \(nserror), \(nserror.userInfo)")
+            return false
+        }
+    }
+    
+    public func saveThreadContext(context: NSManagedObjectContext, completion: (error: NSError?)->Void) {
+        let managedObjectContext = context
+        managedObjectContext.mergePolicy = mergePolicy
+        managedObjectContext.performBlock {
+            
+            if !managedObjectContext.hasChanges {
+                completion(error: nil)
+                return
             }
             
-            return true
+            do {
+                try managedObjectContext.save()
+                completion(error: nil)
+            }
+            catch {
+                let nserror = error as NSError
+                NSLog("Unresolved error \(nserror), \(nserror.userInfo)")
+                completion(error: nserror)
+            }
         }
     }
     

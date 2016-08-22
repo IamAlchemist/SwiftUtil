@@ -38,15 +38,27 @@ class MWDBHelperTests: XCTestCase {
         for _ in 0..<3 {
             insertOneItem()
         }
-        
-        
 
         let count = dbHelper.countForEntity(entityName)
         XCTAssertNotEqual(count, 0)
         
-        dbHelper.removeAllEntity(entityName)
-        let count2 = dbHelper.countForEntity(entityName)
-        XCTAssertEqual(count2, 0)
+        let expectation = expectationWithDescription("testRemoveAllEntityConcurrent")
+        
+        dbHelper.removeAllEntity(entityName) { (error) in
+            XCTAssertNil(error)
+            
+            self.dbHelper.countForEntity(self.entityName, completion: { (count, error) in
+                XCTAssertNil(error)
+                XCTAssertEqual(count, 0)
+                expectation.fulfill()
+            })
+        }
+        
+        waitForExpectationsWithTimeout(2) { (error) in
+            if let error = error {
+                print("wait error: \(error.localizedDescription)")
+            }
+        }
     }
     
     func testRemoveAllEntity() {
@@ -155,6 +167,49 @@ class MWDBHelperTests: XCTestCase {
         let predicate2 = NSPredicate(format: "name = %@", "world")
         let item2 = dbHelper.fetchOneEntity("TestItem", predicate: predicate2)
         XCTAssertNil(item2)
+    }
+    
+    func testInsertOrUpdateConcurrent1() {
+        let predicate = NSPredicate(format: "name = %@", "hello")
+        let entityname = self.entityName
+        let handler = { (item: TestItem) in
+            item.name = "hello"
+        }
+        let dbHelper = self.dbHelper
+        
+        let expectation = expectationWithDescription("testInsertOrUpdateConcurrent1")
+        
+        dbHelper.insertOrUpdateEntity(entityname,
+                                      predicate: predicate,
+                                      itemHandler: handler)
+        { (error) in
+            XCTAssertNil(error)
+            
+            dbHelper.countForEntity(entityname) { (count, error) in
+                XCTAssertNil(error)
+                XCTAssertEqual(count, 1)
+                
+                dbHelper.insertOrUpdateEntity(entityname,
+                                              predicate: predicate,
+                                              itemHandler: handler)
+                { (error) in
+                    XCTAssertNil(error)
+                    
+                    dbHelper.countForEntity(entityname) { (count, error) in
+                        XCTAssertNil(error)
+                        XCTAssertEqual(count, 1)
+                        
+                        expectation.fulfill()
+                    }
+                }
+            }
+        }
+        
+        waitForExpectationsWithTimeout(2) { (error) in
+            if let error = error {
+                print("wait error: \(error.localizedDescription)")
+            }
+        }
     }
     
     func testInsertOrUpdate() {
