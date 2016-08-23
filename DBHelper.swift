@@ -41,7 +41,7 @@ struct MWDBHelper {
         self.mergePolicy = mergePolicy
     }
     
-    func countForEntity(entityName: String, predicate: NSPredicate? = nil, completion: (count: Int, error: NSError?)->Void) {
+    func countForEntity(entityName: String, predicate: NSPredicate? = nil, completion: ((count: Int, error: NSError?)->Void)?) {
         let fetchRequest = NSFetchRequest(entityName: entityName)
         fetchRequest.predicate = predicate
         
@@ -49,7 +49,7 @@ struct MWDBHelper {
         moc.performBlock {
             var error: NSError? = nil
             let result = moc.countForFetchRequest(fetchRequest, error: &error)
-            completion(count: result, error: error)
+            completion?(count: result, error: error)
         }
     }
     
@@ -72,7 +72,7 @@ struct MWDBHelper {
                             sortDescriptor: NSSortDescriptor? = nil,
                             pageSize: Int = 0,
                             pageIndex: Int = 0,
-                            completion: (items: [T]?, error: NSError?)->Void) {
+                            completion: ((items: [T]?, error: NSError?)->Void)?) {
         
         let fetchRequest = NSFetchRequest(entityName: entityName)
         fetchRequest.returnsObjectsAsFaults = false
@@ -89,11 +89,11 @@ struct MWDBHelper {
             do {
                 let items = try moc.executeFetchRequest(fetchRequest)
                 if let result = items as? [T] {
-                    completion(items: result, error: nil)
+                    completion?(items: result, error: nil)
                 }
                 else {
                     let error = self.castError(NSStringFromClass(T))
-                    completion(items: nil, error: error)
+                    completion?(items: nil, error: error)
                 }
                 
             }
@@ -133,7 +133,7 @@ struct MWDBHelper {
     func fetchOneEntity<T: NSManagedObject>(entityName: String,
                                predicate: NSPredicate? = nil,
                                sort sortDescriptor: NSSortDescriptor? = nil,
-                                    completion: (item: T?, error: NSError?)->Void ) {
+                                    completion: ((item: T?, error: NSError?)->Void)? ) {
         
         let fetchRequest = NSFetchRequest(entityName: entityName)
         fetchRequest.returnsObjectsAsFaults = false
@@ -146,14 +146,14 @@ struct MWDBHelper {
             do {
                 let item = try moc.executeFetchRequest(fetchRequest)
                 if let results = item as? [T], result = results.first {
-                    completion(item: result, error: nil)
+                    completion?(item: result, error: nil)
                 }
                 else {
-                    completion(item: nil, error: self.castError(NSStringFromClass(T)))
+                    completion?(item: nil, error: self.castError(NSStringFromClass(T)))
                 }
             }
             catch let error as NSError {
-                completion(item: nil, error: error)
+                completion?(item: nil, error: error)
             }
         }
     }
@@ -180,12 +180,12 @@ struct MWDBHelper {
     
     func removeAllEntity(entityName: String,
                                 predicate: NSPredicate? = nil,
-                                completion: (error: NSError?)->Void) {
+                                completion: ((error: NSError?)->Void)?) {
         
         let moc = currentManagedObjectContext
         fetchEntity(entityName, predicate: predicate) { (items, error) in
             
-            guard let items = items else { completion(error: nil); return }
+            guard let items = items else { completion?(error: nil); return }
             
             for item in items {
                 moc.deleteObject(item)
@@ -208,7 +208,7 @@ struct MWDBHelper {
     func insertOrUpdateEntity<T: NSManagedObject>(entityName: String,
                                      predicate: NSPredicate,
                                      itemHandler: ((item: T) -> Void),
-                                     completion: (error: NSError?)->Void) {
+                                     completion: ((error: NSError?)->Void)?) {
         
         let moc = currentManagedObjectContext
         
@@ -219,7 +219,7 @@ struct MWDBHelper {
             }
             else {
                 guard let newItem = NSEntityDescription.insertNewObjectForEntityForName(entityName, inManagedObjectContext: moc) as? T
-                    else { completion(error: self.castError(NSStringFromClass(T))); return }
+                    else { completion?(error: self.castError(NSStringFromClass(T))); return }
                 itemHandler(item: newItem)
                 
                 self.saveThreadContext(moc, completion: completion)
@@ -260,24 +260,24 @@ struct MWDBHelper {
         }
     }
     
-    func saveThreadContext(context: NSManagedObjectContext, completion: (error: NSError?)->Void) {
+    func saveThreadContext(context: NSManagedObjectContext, completion: ((error: NSError?)->Void)?) {
         let managedObjectContext = context
         managedObjectContext.mergePolicy = mergePolicy
         managedObjectContext.performBlock {
             
             if !managedObjectContext.hasChanges {
-                completion(error: nil)
+                completion?(error: nil)
                 return
             }
             
             do {
                 try managedObjectContext.save()
-                completion(error: nil)
+                completion?(error: nil)
             }
             catch {
                 let nserror = error as NSError
                 NSLog("Unresolved error \(nserror), \(nserror.userInfo)")
-                completion(error: nserror)
+                completion?(error: nserror)
             }
         }
     }
