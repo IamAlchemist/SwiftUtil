@@ -44,7 +44,7 @@ struct MWUtil {
         return false
     }
     
-    static func directoryExists(path: String) -> Bool {
+    static func fileExistsAtPath(path: String) -> Bool {
         return NSFileManager.defaultManager().fileExistsAtPath(path)
     }
     
