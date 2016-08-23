@@ -10,7 +10,7 @@ import Foundation
 import CleanroomLogger
 import CoreData
 
-public struct MWDBHelper {
+struct MWDBHelper {
     let managedObjectContext: NSManagedObjectContext
     let mergePolicy: AnyObject
     
@@ -36,12 +36,12 @@ public struct MWDBHelper {
         }
     }
     
-    public init(manageObjectContext: NSManagedObjectContext, mergePolicy: AnyObject = NSMergeByPropertyObjectTrumpMergePolicy){
-        self.managedObjectContext = manageObjectContext
+    init(managedObjectContext: NSManagedObjectContext, mergePolicy: AnyObject = NSMergeByPropertyObjectTrumpMergePolicy){
+        self.managedObjectContext = managedObjectContext
         self.mergePolicy = mergePolicy
     }
     
-    public func countForEntity(entityName: String, predicate: NSPredicate? = nil, completion: (count: Int, error: NSError?)->Void) {
+    func countForEntity(entityName: String, predicate: NSPredicate? = nil, completion: (count: Int, error: NSError?)->Void) {
         let fetchRequest = NSFetchRequest(entityName: entityName)
         fetchRequest.predicate = predicate
         
@@ -53,7 +53,7 @@ public struct MWDBHelper {
         }
     }
     
-    public func countForEntity(entityName: String, predicate: NSPredicate? = nil) -> Int? {
+    func countForEntity(entityName: String, predicate: NSPredicate? = nil) -> Int? {
         let fetchRequest = NSFetchRequest(entityName: entityName)
         fetchRequest.predicate = predicate
         
@@ -67,7 +67,7 @@ public struct MWDBHelper {
         return result
     }
     
-    public func fetchEntity<T: NSManagedObject>(entityName: String,
+    func fetchEntity<T: NSManagedObject>(entityName: String,
                             predicate: NSPredicate? = nil,
                             sortDescriptor: NSSortDescriptor? = nil,
                             pageSize: Int = 0,
@@ -103,7 +103,7 @@ public struct MWDBHelper {
         }
     }
     
-    public func fetchEntity<T: NSManagedObject>(entityName: String,
+    func fetchEntity<T: NSManagedObject>(entityName: String,
                             predicate: NSPredicate? = nil,
                             sortDescriptor: NSSortDescriptor? = nil,
                             pageSize: Int = 0,
@@ -130,7 +130,7 @@ public struct MWDBHelper {
         return nil
     }
     
-    public func fetchOneEntity<T: NSManagedObject>(entityName: String,
+    func fetchOneEntity<T: NSManagedObject>(entityName: String,
                                predicate: NSPredicate? = nil,
                                sort sortDescriptor: NSSortDescriptor? = nil,
                                     completion: (item: T?, error: NSError?)->Void ) {
@@ -158,7 +158,7 @@ public struct MWDBHelper {
         }
     }
     
-    public func fetchOneEntity<T: NSManagedObject>(entityName: String,
+    func fetchOneEntity<T: NSManagedObject>(entityName: String,
                                predicate: NSPredicate? = nil,
                                sort sortDescriptor: NSSortDescriptor? = nil ) -> T? {
         
@@ -178,7 +178,7 @@ public struct MWDBHelper {
         }
     }
     
-    public func removeAllEntity(entityName: String,
+    func removeAllEntity(entityName: String,
                                 predicate: NSPredicate? = nil,
                                 completion: (error: NSError?)->Void) {
         
@@ -195,7 +195,7 @@ public struct MWDBHelper {
         }
     }
     
-    public func removeAllEntity(entityName: String, predicate: NSPredicate? = nil) -> Bool {
+    func removeAllEntity(entityName: String, predicate: NSPredicate? = nil) -> Bool {
         guard let items = fetchEntity(entityName, predicate: predicate) else { return true }
         
         for item in items {
@@ -205,7 +205,7 @@ public struct MWDBHelper {
         return saveContext()
     }
     
-    public func insertOrUpdateEntity<T: NSManagedObject>(entityName: String,
+    func insertOrUpdateEntity<T: NSManagedObject>(entityName: String,
                                      predicate: NSPredicate,
                                      itemHandler: ((item: T) -> Void),
                                      completion: (error: NSError?)->Void) {
@@ -227,7 +227,7 @@ public struct MWDBHelper {
         }
     }
     
-    public func insertOrUpdateEntity<T: NSManagedObject>(entityName: String, predicate: NSPredicate, itemHandler: ((item: T) -> Void)) -> Bool {
+    func insertOrUpdateEntity<T: NSManagedObject>(entityName: String, predicate: NSPredicate, itemHandler: ((item: T) -> Void)) -> Bool {
         
         if let existItem: T = fetchOneEntity(entityName, predicate: predicate) {
             itemHandler(item: existItem)
@@ -243,7 +243,7 @@ public struct MWDBHelper {
         }
     }
     
-    public func saveContext () -> Bool {
+    func saveContext () -> Bool {
         if !managedObjectContext.hasChanges {
             return true
         }
@@ -260,7 +260,7 @@ public struct MWDBHelper {
         }
     }
     
-    public func saveThreadContext(context: NSManagedObjectContext, completion: (error: NSError?)->Void) {
+    func saveThreadContext(context: NSManagedObjectContext, completion: (error: NSError?)->Void) {
         let managedObjectContext = context
         managedObjectContext.mergePolicy = mergePolicy
         managedObjectContext.performBlock {
