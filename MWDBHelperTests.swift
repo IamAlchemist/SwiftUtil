@@ -25,7 +25,7 @@ class MWDBHelperTests: XCTestCase {
     override func setUp() {
         super.setUp()
         if (dbHelper == nil) {
-            dbHelper = MWDBHelper(manageObjectContext: manageObjectContext)
+            dbHelper = MWDBHelper(managedObjectContext: manageObjectContext)
         }
     }
     
