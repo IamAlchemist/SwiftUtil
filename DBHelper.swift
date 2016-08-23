@@ -95,10 +95,10 @@ struct MWDBHelper {
                     let error = self.castError(NSStringFromClass(T))
                     completion?(items: nil, error: error)
                 }
-                
             }
             catch let error as NSError {
-                print("concurrent fetch fail, \(error.localizedDescription)")
+                Log.error?.message("concurrent fetch fail, \(error.localizedDescription)")
+                completion?(items: nil, error: error)
             }
         }
     }
@@ -260,7 +260,7 @@ struct MWDBHelper {
         }
     }
     
-    func saveThreadContext(context: NSManagedObjectContext, completion: ((error: NSError?)->Void)?) {
+    func saveThreadContext(context: NSManagedObjectContext, flush: Bool = false, completion: ((error: NSError?)->Void)?) {
         let managedObjectContext = context
         managedObjectContext.mergePolicy = mergePolicy
         managedObjectContext.performBlock {
@@ -272,7 +272,17 @@ struct MWDBHelper {
             
             do {
                 try managedObjectContext.save()
-                completion?(error: nil)
+                if flush {
+                    dispatch_async(dispatch_get_main_queue(), { 
+                        self.saveContext()
+                        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), { 
+                            completion?(error: nil)
+                        })
+                    })
+                }
+                else {
+                    completion?(error: nil)
+                }
             }
             catch {
                 let nserror = error as NSError
