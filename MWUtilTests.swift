@@ -25,27 +25,27 @@ class SwiftUtilExampleTests: XCTestCase {
         super.tearDown()
     }
     
-    func testDirectoryExists() {
+    func testfileExistsAtPath() {
         let documentsPath = MWUtil.applicationDocumentsDirectory().path!
-        XCTAssertTrue(MWUtil.directoryExists(documentsPath), "can't find : \(documentsPath)")
+        XCTAssertTrue(MWUtil.fileExistsAtPath(documentsPath), "can't find : \(documentsPath)")
     }
     
     func testCreateDirectory() {
         let newDirectory = testDirectory.URLByAppendingPathComponent("useless directory")
         MWUtil.createDirectory(newDirectory)
-        XCTAssertTrue(MWUtil.directoryExists(newDirectory.path!), "create directory failed")
+        XCTAssertTrue(MWUtil.fileExistsAtPath(newDirectory.path!), "create directory failed")
     }
     
     func testRemoveDirectory() {
         MWUtil.createDirectory(testDirectory)
         let testDirectoryPath = testDirectory.path!
-        XCTAssertTrue(MWUtil.directoryExists(testDirectoryPath), "can't create folder \(testDirectoryPath)")
+        XCTAssertTrue(MWUtil.fileExistsAtPath(testDirectoryPath), "can't create folder \(testDirectoryPath)")
         
         for folderName in ["Folder1", "Folder2"] {
             let folder = testDirectory.URLByAppendingPathComponent(folderName)
             MWUtil.createDirectory(folder)
             let folderPath = folder.path!
-            XCTAssertTrue(MWUtil.directoryExists(folderPath), "can't create folder \(folderPath)")
+            XCTAssertTrue(MWUtil.fileExistsAtPath(folderPath), "can't create folder \(folderPath)")
         }
         
         
@@ -59,11 +59,11 @@ class SwiftUtilExampleTests: XCTestCase {
             print("can't write file \(error.localizedDescription)")
         }
         
-        XCTAssertTrue(MWUtil.directoryExists(textFile.path!), "can't find \(textFile.path!)")
+        XCTAssertTrue(MWUtil.fileExistsAtPath(textFile.path!), "can't find \(textFile.path!)")
         
         MWUtil.removeDirectory(testDirectory)
         
-        XCTAssertFalse(MWUtil.directoryExists(testDirectory.path!), "can't remove \(testDirectory.path!)")
+        XCTAssertFalse(MWUtil.fileExistsAtPath(testDirectory.path!), "can't remove \(testDirectory.path!)")
         
         MWUtil.removeDirectory(testDirectory)
     }
