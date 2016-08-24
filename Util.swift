@@ -69,5 +69,10 @@ struct MWUtil {
         let config = XcodeLogConfiguration(minimumSeverity: .verbose, colorTable: HulkColorTable(), formatter: formatter)
         Log.enable(configuration: config)
     }
+    
+    static func errorWithDomain(domain: String, code: Int, description: NSString) -> NSError {
+        let userinfo : [NSObject: AnyObject] = [NSLocalizedDescriptionKey: description]
+        return NSError(domain: domain, code: code, userInfo: userinfo)
+    }
 }
 
