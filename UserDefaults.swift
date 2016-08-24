@@ -8,7 +8,7 @@
 
 import Foundation
 
-struct MWUserDefaults {
+struct MWUserDefaultsValue {
     private let key : String
     private var defaults: NSUserDefaults {
         get {
