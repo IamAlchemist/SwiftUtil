@@ -20,6 +20,10 @@ struct MWUserDefaultsValue {
         self.key = key
     }
     
+    func clear() {
+        defaults.removeObjectForKey(key)
+    }
+    
     func save(value: NSData) {
         defaults.setObject(value, forKey: key)
     }
