@@ -53,11 +53,14 @@ struct MWDBHelper {
     
     func countForEntity(entityName: String, predicate: NSPredicate? = nil) -> Int? {
         
-        var error: NSError? = nil
-        let result = managedObjectContext.countForFetchRequest(countForEntity(entityName, predicate: predicate), error: &error)
-        if let error = error {
-            Log.error?.message("fetch count fail, \(error.localizedDescription)")
-            return nil
+        var result: Int? = nil
+        managedObjectContext.performBlockAndWait { 
+            var error: NSError? = nil
+            
+            result = self.managedObjectContext.countForFetchRequest(self.countForEntity(entityName, predicate: predicate), error: &error)
+            if let error = error {
+                Log.error?.message("fetch count fail, \(error.localizedDescription)")
+            }
         }
         
         return result
@@ -100,15 +103,20 @@ struct MWDBHelper {
         
         let fetchRequest = fetchForEntity(entityName, predicate: predicate, sort: sort, pageSize: pageSize, pageIndex: pageIndex)
         
-        do {
-            let items = try managedObjectContext.executeFetchRequest(fetchRequest) as? [T]
-            return items
-        }
-        catch let error as NSError {
-            Log.error?.message("fetch fail, \(error.localizedDescription)")
-        }
+        let moc = currentManagedObjectContext
         
-        return nil
+        var items : [T]? = nil
+        
+        moc.performBlockAndWait { 
+            do {
+                items = try moc.executeFetchRequest(fetchRequest) as? [T]
+            }
+            catch let error as NSError {
+                Log.error?.message("fetch fail, \(error.localizedDescription)")
+            }
+        }
+
+        return items
     }
     
     func fetchOneEntity<T: NSManagedObject>(entityName: String,
@@ -151,11 +159,15 @@ struct MWDBHelper {
     func removeAllEntity(entityName: String, predicate: NSPredicate? = nil) -> Bool {
         guard let items = fetchEntity(entityName, predicate: predicate) else { return true }
         
-        for item in items {
-            managedObjectContext.deleteObject(item)
+        let moc = currentManagedObjectContext
+        
+        moc.performBlockAndWait {
+            for item in items {
+                moc.deleteObject(item)
+            }
         }
         
-        return saveContext()
+        return saveThreadContext(moc)
     }
     
     func insertOrUpdateOneEntity<T: NSManagedObject>(entityName: String,
@@ -182,18 +194,21 @@ struct MWDBHelper {
     
     func insertOrUpdateOneEntity<T: NSManagedObject>(entityName: String, predicate: NSPredicate, itemHandler: ((item: T) -> Void)) -> Bool {
         
-        if let existItem: T = fetchOneEntity(entityName, predicate: predicate) {
-            itemHandler(item: existItem)
-            return saveContext()
+        let moc = currentManagedObjectContext
+        
+        moc.performBlockAndWait { 
+            if let existItem: T = self.fetchOneEntity(entityName, predicate: predicate) {
+                itemHandler(item: existItem)
+            }
+            else {
+                guard let newItem = NSEntityDescription.insertNewObjectForEntityForName(entityName, inManagedObjectContext: moc) as? T
+                    else { return }
+                
+                itemHandler(item: newItem)
+            }
         }
-        else {
-            guard let newItem = NSEntityDescription.insertNewObjectForEntityForName(entityName, inManagedObjectContext: managedObjectContext) as? T
-                else { return false }
-            
-            itemHandler(item: newItem)
-            
-            return saveContext()
-        }
+        
+        return saveThreadContext(moc)
     }
     
     func saveContext () -> Bool {
@@ -211,6 +226,33 @@ struct MWDBHelper {
             NSLog("Unresolved error \(nserror), \(nserror.userInfo)")
             return false
         }
+    }
+    
+    func saveThreadContext(moc: NSManagedObjectContext) -> Bool {
+        var result = false
+        
+        moc.mergePolicy = mergePolicy
+        
+        
+        moc.performBlockAndWait {
+            if !moc.hasChanges {
+                return
+            }
+            
+            do {
+                try moc.save()
+                result = true
+                dispatch_async(dispatch_get_main_queue(), {
+                    self.saveContext()
+                })
+            }
+            catch {
+                let nserror = error as NSError
+                NSLog("Unresolved error \(nserror), \(nserror.userInfo)")
+            }
+        }
+        
+        return result
     }
     
     func saveThreadContext(context: NSManagedObjectContext, completion: ((error: NSError?)->Void)?) {
