@@ -179,7 +179,7 @@ class MWDBHelperTests: XCTestCase {
         
         let expectation = expectationWithDescription("testInsertOrUpdateConcurrent1")
         
-        dbHelper.insertOrUpdateEntity(entityname,
+        dbHelper.insertOrUpdateOneEntity(entityname,
                                       predicate: predicate,
                                       itemHandler: handler)
         { (error) in
@@ -189,7 +189,7 @@ class MWDBHelperTests: XCTestCase {
                 XCTAssertNil(error)
                 XCTAssertEqual(count, 1)
                 
-                dbHelper.insertOrUpdateEntity(entityname,
+                dbHelper.insertOrUpdateOneEntity(entityname,
                                               predicate: predicate,
                                               itemHandler: handler)
                 { (error) in
@@ -215,14 +215,14 @@ class MWDBHelperTests: XCTestCase {
     func testInsertOrUpdate() {
         let predicate = NSPredicate(format: "name = %@", "hello")
         
-        dbHelper.insertOrUpdateEntity("TestItem", predicate: predicate) { (item : TestItem) in
+        dbHelper.insertOrUpdateOneEntity("TestItem", predicate: predicate) { (item : TestItem) in
             item.name = "hello"
         }
         
         let count = dbHelper.countForEntity("TestItem", predicate: predicate)
         XCTAssertEqual(count, 1)
         
-        dbHelper.insertOrUpdateEntity("TestItem", predicate: predicate) { (item : TestItem) in
+        dbHelper.insertOrUpdateOneEntity("TestItem", predicate: predicate) { (item : TestItem) in
             item.name = "hello"
         }
         
