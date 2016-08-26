@@ -34,6 +34,25 @@ class MWDBHelperTests: XCTestCase {
         dbHelper.removeAllEntity("TestItem")
     }
     
+    func testRemoveAllEntityInBack() {
+        for _ in 0..<3 {
+            insertOneItem()
+        }
+        
+        let expectation = expectationWithDescription("testRemoveAllEntityInBack")
+        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0)) { 
+            let result = self.dbHelper.removeAllEntity(self.entityName)
+            XCTAssertTrue(result)
+            expectation.fulfill()
+        }
+        
+        waitForExpectationsWithTimeout(2) { (error) in
+            if let error = error {
+                print("wait error: \(error.localizedDescription)")
+            }
+        }
+    }
+    
     func testRemoveAllEntityConcurrent() {
         for _ in 0..<3 {
             insertOneItem()
@@ -74,6 +93,25 @@ class MWDBHelperTests: XCTestCase {
         XCTAssertEqual(count2, 0)
     }
     
+    func testCountForEntityInBack() {
+        insertOneItem()
+        
+        let expectation = expectationWithDescription("testCountForEntityInBack")
+        
+        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0)) {
+            let count = self.dbHelper.countForEntity(self.entityName)
+            XCTAssertNotNil(count)
+            XCTAssertEqual(count!, 1)
+            expectation.fulfill()
+        }
+
+        waitForExpectationsWithTimeout(2) { (error) in
+            if let error = error {
+                print("Error: \(error.localizedDescription)")
+            }
+        }
+    }
+    
     func testCountForEntityConcurrent() {
         insertOneItem()
         
@@ -105,6 +143,26 @@ class MWDBHelperTests: XCTestCase {
         XCTAssertEqual(count2, 3)
     }
     
+    func testFetchEntityInBack() {
+        insertOneItem()
+        
+        let expectation = expectationWithDescription("Test Fetch Entity In Back")
+        
+        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0)) {
+            let items: [TestItem]? = self.dbHelper.fetchEntity(self.entityName)
+            XCTAssertNotNil(items)
+            XCTAssertTrue(items!.count != 0)
+            
+            expectation.fulfill()
+        }
+        
+        waitForExpectationsWithTimeout(2) { (error) in
+            if let error = error {
+                print("wait error: \(error.localizedDescription)")
+            }
+        }
+    }
+    
     func testFetchEntityConcurrent() {
         insertOneItem()
         
@@ -130,6 +188,25 @@ class MWDBHelperTests: XCTestCase {
         let items = dbHelper.fetchEntity("TestItem")
         XCTAssertNotNil(items)
         XCTAssertTrue(items!.count != 0)
+    }
+    
+    func testFetchOneEntityInBack() {
+        insertOneItem()
+        
+        let expectation = expectationWithDescription("Test Fetch One Entity In Back")
+        
+        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0)) {
+            let item: TestItem? = self.dbHelper.fetchOneEntity(self.entityName)
+            XCTAssertNotNil(item)
+            XCTAssertNotEqual(NSThread.currentThread(), NSThread.mainThread())
+            expectation.fulfill()
+        }
+        
+        waitForExpectationsWithTimeout(2) { (error) in
+            if let error = error {
+                print("wait error: \(error.localizedDescription)")
+            }
+        }
     }
     
     func testFetchOneEntityConcurrent() {
