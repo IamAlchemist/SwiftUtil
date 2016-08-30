@@ -7,7 +7,9 @@
 //
 
 import Foundation
+#if !ASSRC
 import CleanroomLogger
+#endif
 import CoreData
 
 struct MWDBHelper {
