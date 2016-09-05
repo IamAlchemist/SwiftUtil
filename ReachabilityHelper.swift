@@ -46,7 +46,7 @@ class ReachabilityHelper {
         return reachability?.currentReachabilityStatus ?? .NotReachable
     }
     
-    init(hostName hostName: String? = nil) {
+    init(hostName: String? = nil) {
         do {
             if let hostName = hostName {
                 reachability = try Reachability(hostname: hostName)
@@ -59,7 +59,7 @@ class ReachabilityHelper {
             return
         } catch {}
         
-        NSNotificationCenter.defaultCenter().addObserver(self, selector: "reachabilityChanged:", name: ReachabilityChangedNotification, object: reachability)
+        NSNotificationCenter.defaultCenter().addObserver(self, selector: #selector(ReachabilityHelper.reachabilityChanged(_:)), name: ReachabilityChangedNotification, object: reachability)
     }
     
     func startNotifier() {
@@ -76,7 +76,7 @@ class ReachabilityHelper {
         reachability = nil
     }
     
-    @objc public func reachabilityChanged(note: NSNotification) {
+    @objc internal func reachabilityChanged(note: NSNotification) {
         let reachability = note.object as! Reachability
         
         delegate?.reachabilityChanged(reachability)
