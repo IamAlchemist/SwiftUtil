@@ -15,15 +15,15 @@ import CoreData
 struct HulkColorTable : ColorTable {
     func foregroundColorForSeverity(severity: LogSeverity) -> Color? {
         switch severity {
-        case .verbose:
+        case .Verbose:
             return Color(r: 64, g: 64, b: 64)
-        case .debug:
+        case .Debug:
             return Color(r: 128, g: 128, b: 128)
-        case .info:
+        case .Info:
             return Color(r: 0, g: 184, b: 254)
-        case .warning:
+        case .Warning:
             return Color(r: 214, g: 134, b: 47)
-        case .error:
+        case .Error:
             return Color(r: 185, g: 81, b: 46)
         }
     }
@@ -67,8 +67,8 @@ struct MWUtil {
     
     static func setupCleanRoomLogger() {
         setenv("XcodeColors", "YES", 0);
-        let formatter = XcodeLogFormatter(timestampStyle: .`default`, severityStyle: .xcode, delimiterStyle: nil, showCallSite: true, showCallingThread: false, colorizer: nil)
-        let config = XcodeLogConfiguration(minimumSeverity: .verbose, colorTable: HulkColorTable(), formatter: formatter)
+        let formatter = XcodeLogFormatter(timestampStyle: .Default, severityStyle: .Xcode, delimiterStyle: nil, showCallSite: true, showCallingThread: false, colorizer: nil)
+        let config = XcodeLogConfiguration(minimumSeverity: .Verbose, colorTable: HulkColorTable(), formatter: formatter)
         Log.enable(configuration: config)
     }
     
