@@ -10,9 +10,9 @@ import Foundation
 
 struct MWUserDefaultsValue {
     private let key : String
-    private var defaults: NSUserDefaults {
+    private var defaults: UserDefaults {
         get {
-            return NSUserDefaults.standardUserDefaults()
+            return UserDefaults.standard
         }
     }
     
@@ -21,60 +21,60 @@ struct MWUserDefaultsValue {
     }
     
     func clear() {
-        defaults.removeObjectForKey(key)
+        defaults.removeObject(forKey: key)
     }
     
     func save(value: NSData) {
-        defaults.setObject(value, forKey: key)
+        defaults.set(value, forKey: key)
     }
     
     func save(value: String) {
-        defaults.setObject(value, forKey: key)
+        defaults.set(value, forKey: key)
     }
     
     func save(value: Int) {
-        defaults.setInteger(value, forKey: key)
+        defaults.set(value, forKey: key)
     }
     
     func save(value: Float) {
-        defaults.setFloat(value, forKey: key)
+        defaults.set(value, forKey: key)
     }
     
     func save(value: Double) {
-        defaults.setDouble(value, forKey: key)
+        defaults.set(value, forKey: key)
     }
     
     func save(value: Bool) {
-        defaults.setBool(value, forKey: key)
+        defaults.set(value, forKey: key)
     }
     
     func save(value: NSDate) {
-        defaults.setObject(value, forKey: key)
+        defaults.set(value, forKey: key)
     }
     
     func save<T: AnyObject>(value: [T]) {
-        defaults.setObject((value as NSArray), forKey: key)
+        defaults.set((value as NSArray), forKey: key)
     }
     
     func save(value: [NSObject: AnyObject]) {
-        defaults.setObject(value, forKey: key)
+        defaults.set(value, forKey: key)
     }
     
     var data : NSData? {
         get {
-            return defaults.objectForKey(key) as? NSData
+            return defaults.object(forKey: key) as? NSData
         }
     }
     
     var string : String? {
         get {
-            return defaults.stringForKey(key)
+            return defaults.string(forKey: key)
         }
     }
     
     var int : Int? {
         get {
-            return number?.integerValue
+            return number?.intValue
         }
     }
     
@@ -98,25 +98,25 @@ struct MWUserDefaultsValue {
     
     var date : NSDate? {
         get {
-            return defaults.objectForKey(key) as? NSDate
+            return defaults.object(forKey: key) as? NSDate
         }
     }
     
     var array : [AnyObject]? {
         get {
-            return defaults.objectForKey(key) as? [AnyObject]
+            return defaults.object(forKey: key) as? [AnyObject]
         }
     }
     
     var dictionary : [NSObject: AnyObject]? {
         get {
-            return defaults.objectForKey(key) as? [NSObject: AnyObject]
+            return defaults.object(forKey: key) as? [NSObject: AnyObject]
         }
     }
     
     private var number : NSNumber? {
         get {
-            return defaults.objectForKey(key) as? NSNumber
+            return defaults.object(forKey: key) as? NSNumber
         }
     }
 }

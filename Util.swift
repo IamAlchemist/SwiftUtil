@@ -13,7 +13,7 @@ import CleanroomLogger
 import CoreData
 
 struct HulkColorTable : ColorTable {
-    func foregroundColorForSeverity(severity: LogSeverity) -> Color? {
+    func foreground(forSeverity severity: LogSeverity) -> Color? {
         switch severity {
         case .verbose:
             return Color(r: 64, g: 64, b: 64)
@@ -27,16 +27,20 @@ struct HulkColorTable : ColorTable {
             return Color(r: 185, g: 81, b: 46)
         }
     }
+    
+    func background(forSeverity severity: LogSeverity) -> Color? {
+        return nil
+    }
 }
 
 struct MWUtil {
     static func applicationDocumentsDirectory() -> NSURL {
-        return NSFileManager.defaultManager().URLsForDirectory(.DocumentDirectory, inDomains: .UserDomainMask).last!
+        return FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).last! as NSURL
     }
     
     static func createDirectory(url: NSURL) -> Bool {
         do {
-            try NSFileManager.defaultManager().createDirectoryAtURL(url, withIntermediateDirectories: true, attributes: nil)
+            try FileManager.default.createDirectory(at: url as URL, withIntermediateDirectories: true, attributes: nil)
             return true
         }
         catch let error as NSError {
@@ -47,18 +51,18 @@ struct MWUtil {
     }
     
     static func fileExistsAtPath(path: String) -> Bool {
-        return NSFileManager.defaultManager().fileExistsAtPath(path)
+        return FileManager.default.fileExists(atPath: path)
     }
     
     static func removeDirectory(path: NSURL) {
-        let fileManager = NSFileManager.defaultManager()
+        let fileManager = FileManager.default
         do {
-            let contents = try fileManager.contentsOfDirectoryAtURL(path, includingPropertiesForKeys: nil, options: [])
+            let contents = try fileManager.contentsOfDirectory(at: path as URL, includingPropertiesForKeys: nil, options: [])
             for content in contents {
-                try fileManager.removeItemAtURL(content)
+                try fileManager.removeItem(at: content)
             }
             
-            try fileManager.removeItemAtURL(path)
+            try fileManager.removeItem(at: path as URL)
         }
         catch let error as NSError {
             Log.error?.message("could not delete : \(error.localizedDescription)")
@@ -73,7 +77,7 @@ struct MWUtil {
     }
     
     static func errorWithDomain(domain: String, code: Int, description: NSString) -> NSError {
-        let userinfo : [NSObject: AnyObject] = [NSLocalizedDescriptionKey: description]
+        let userinfo : [NSObject: AnyObject] = [NSLocalizedDescriptionKey as NSObject: description]
         return NSError(domain: domain, code: code, userInfo: userinfo)
     }
 }

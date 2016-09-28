@@ -16,22 +16,22 @@ struct MWDBHelper {
     let managedObjectContext: NSManagedObjectContext
     let mergePolicy: AnyObject
     
-    private let MOC_KEY = "H5CACHE_MOC_KEY"
+    private let MOC_KEY : NSString = "H5CACHE_MOC_KEY"
     var currentManagedObjectContext: NSManagedObjectContext {
         get {
-            let thisThread = NSThread.currentThread()
+            let thisThread = Thread.current
             
-            if thisThread == NSThread.mainThread() {
+            if thisThread == Thread.main {
                 return managedObjectContext
             }
             
-            if let threadMOC = thisThread.threadDictionary.objectForKey(MOC_KEY) as? NSManagedObjectContext {
+            if let threadMOC = thisThread.threadDictionary.object(forKey: MOC_KEY) as? NSManagedObjectContext {
                 return threadMOC
             }
             else {
-                let threadMOC = NSManagedObjectContext(concurrencyType: .PrivateQueueConcurrencyType)
+                let threadMOC = NSManagedObjectContext(concurrencyType: .privateQueueConcurrencyType)
                 thisThread.threadDictionary.setObject(threadMOC, forKey: MOC_KEY)
-                threadMOC.parentContext = managedObjectContext
+                threadMOC.parent = managedObjectContext
                 
                 return threadMOC
             }
@@ -46,21 +46,24 @@ struct MWDBHelper {
     func countForEntity(entityName: String, predicate: NSPredicate? = nil, completion: ((Int, NSError?)->Void)?) {
 
         let moc = currentManagedObjectContext
-        moc.performBlock {
-            var error: NSError? = nil
-            let count = moc.countForFetchRequest(self.countForEntity(entityName, predicate: predicate), error: &error)
-            completion?(count, error)
+        moc.perform {
+            do {
+                let count = try moc.count(for: self.countForEntity(entityName: entityName, predicate: predicate))
+                completion?(count, nil)
+            }
+            catch let error as NSError {
+                completion?(0, error)
+            }
         }
     }
     
     func countForEntity(entityName: String, predicate: NSPredicate? = nil) -> Int? {
-        
         var result: Int? = nil
-        managedObjectContext.performBlockAndWait { 
-            var error: NSError? = nil
-            
-            result = self.managedObjectContext.countForFetchRequest(self.countForEntity(entityName, predicate: predicate), error: &error)
-            if let error = error {
+        managedObjectContext.performAndWait {
+            do {
+                result = try self.managedObjectContext.count(for: self.countForEntity(entityName: entityName, predicate: predicate))
+            }
+            catch let error as NSError {
                 Log.error?.message("fetch count fail, \(error.localizedDescription)")
             }
         }
@@ -76,17 +79,17 @@ struct MWDBHelper {
                             pageIndex: Int = 0,
                             completion: (([T]?, NSError?)->Void)?) {
         
-        let fetchRequest = fetchForEntity(entityName, predicate: predicate, sort: sort, pageSize: pageSize, pageIndex: pageIndex)
+        let fetchRequest = fetchForEntity(entityName: entityName, predicate: predicate, sort: sort, pageSize: pageSize, pageIndex: pageIndex)
         
         let moc = currentManagedObjectContext
-        moc.performBlock {
+        moc.perform {
             do {
-                let items = try moc.executeFetchRequest(fetchRequest)
+                let items = try moc.fetch(fetchRequest)
                 if let items = items as? [T] {
                     completion?(items, nil)
                 }
                 else {
-                    let error = self.castError(NSStringFromClass(T))
+                    let error = self.castError(className: NSStringFromClass(T.self))
                     completion?(nil, error)
                 }
             }
@@ -103,15 +106,15 @@ struct MWDBHelper {
                             pageSize: Int = 0,
                             pageIndex: Int = 0) -> [T]? {
         
-        let fetchRequest = fetchForEntity(entityName, predicate: predicate, sort: sort, pageSize: pageSize, pageIndex: pageIndex)
+        let fetchRequest = fetchForEntity(entityName: entityName, predicate: predicate, sort: sort, pageSize: pageSize, pageIndex: pageIndex)
         
         let moc = currentManagedObjectContext
         
         var items : [T]? = nil
         
-        moc.performBlockAndWait { 
+        moc.performAndWait { 
             do {
-                items = try moc.executeFetchRequest(fetchRequest) as? [T]
+                items = try moc.fetch(fetchRequest) as? [T]
             }
             catch let error as NSError {
                 Log.error?.message("fetch fail, \(error.localizedDescription)")
@@ -130,87 +133,88 @@ struct MWDBHelper {
             completion?(items?.first, error)
         }
         
-        fetchEntity(entityName, predicate: predicate, sort: sort, pageSize: 1, completion: completionWrapper)
+        fetchEntity(entityName: entityName, predicate: predicate, sort: sort, pageSize: 1, pageIndex: 0, completion: completionWrapper)
     }
     
     func fetchOneEntity<T: NSManagedObject>(entityName: String,
                                predicate: NSPredicate? = nil,
                                sort: NSSortDescriptor? = nil ) -> T? {
         
-        guard let items:[T] = fetchEntity(entityName, predicate: predicate, sort: sort, pageSize: 0) else { return nil }
+        guard let items:[T] = fetchEntity(entityName: entityName, predicate: predicate, sort: sort, pageSize: 0) else { return nil }
         return items.first
     }
     
     func removeAllEntity(entityName: String,
                          predicate: NSPredicate? = nil,
-                         completion: ((error: NSError?)->Void)?) {
+                         completion: ((_ error: NSError?)->Void)?) {
         
         let moc = currentManagedObjectContext
-        fetchEntity(entityName, predicate: predicate) { (items, error) in
+
+        fetchEntity(entityName: entityName, predicate: predicate) { (items, error) in
             
-            guard let items = items else { completion?(error: nil); return }
+            guard let items = items else { completion?(nil); return }
             
             for item in items {
-                moc.deleteObject(item)
+                moc.delete(item)
             }
             
-            self.saveThreadContext(moc, completion: completion)
+            self.saveThreadContext(context: moc, completion: completion)
         }
     }
     
     func removeAllEntity(entityName: String, predicate: NSPredicate? = nil) -> Bool {
-        guard let items = fetchEntity(entityName, predicate: predicate) else { return true }
+        guard let items = fetchEntity(entityName: entityName, predicate: predicate) else { return true }
         
         let moc = currentManagedObjectContext
         
-        moc.performBlockAndWait {
+        moc.performAndWait {
             for item in items {
-                moc.deleteObject(item)
+                moc.delete(item)
             }
         }
         
-        return saveThreadContext(moc)
+        return saveThreadContext(moc: moc)
     }
     
     func insertOrUpdateOneEntity<T: NSManagedObject>(entityName: String,
                                      predicate: NSPredicate,
-                                     itemHandler: ((item: T) -> Void),
-                                     completion: ((error: NSError?)->Void)?) {
+                                     itemHandler: @escaping ((_ item: T) -> Void),
+                                     completion: ((_ error: NSError?)->Void)?) {
         
         let moc = currentManagedObjectContext
         
-        fetchOneEntity(entityName, predicate: predicate) { (item:T?, error) in
+        fetchOneEntity(entityName: entityName, predicate: predicate) { (item:T?, error) in
             if let item = item {
-                itemHandler(item: item)
-                self.saveThreadContext(moc, completion: completion)
+                itemHandler(item)
+                self.saveThreadContext(context: moc, completion: completion)
             }
             else {
-                guard let newItem = NSEntityDescription.insertNewObjectForEntityForName(entityName, inManagedObjectContext: moc) as? T
-                    else { completion?(error: self.castError(NSStringFromClass(T))); return }
-                itemHandler(item: newItem)
+                guard let newItem = NSEntityDescription.insertNewObject(forEntityName: entityName, into: moc) as? T
+                    else { completion?(self.castError(className: NSStringFromClass(T.self))); return }
+                itemHandler(newItem)
                 
-                self.saveThreadContext(moc, completion: completion)
+                self.saveThreadContext(context: moc, completion: completion)
             }
         }
     }
     
-    func insertOrUpdateOneEntity<T: NSManagedObject>(entityName: String, predicate: NSPredicate, itemHandler: ((item: T) -> Void)) -> Bool {
+    func insertOrUpdateOneEntity<T: NSManagedObject>(entityName: String, predicate: NSPredicate, itemHandler: @escaping ((_ item: T) -> Void)) -> Bool {
         
         let moc = currentManagedObjectContext
         
-        moc.performBlockAndWait { 
-            if let existItem: T = self.fetchOneEntity(entityName, predicate: predicate) {
-                itemHandler(item: existItem)
+        moc.performAndWait { 
+            if let existItem: T = self.fetchOneEntity(entityName: entityName, predicate: predicate) {
+                itemHandler(existItem)
             }
             else {
-                guard let newItem = NSEntityDescription.insertNewObjectForEntityForName(entityName, inManagedObjectContext: moc) as? T
+                guard let newItem = NSEntityDescription.insertNewObject(forEntityName: entityName, into: moc) as? T
                     else { return }
                 
-                itemHandler(item: newItem)
+                itemHandler(newItem)
             }
         }
         
-        return saveThreadContext(moc)
+        return saveThreadContext(moc: moc)
     }
     
     func saveContext () -> Bool {
@@ -236,7 +240,7 @@ struct MWDBHelper {
         moc.mergePolicy = mergePolicy
         
         
-        moc.performBlockAndWait {
+        moc.performAndWait {
             if !moc.hasChanges {
                 return
             }
@@ -244,9 +248,9 @@ struct MWDBHelper {
             do {
                 try moc.save()
                 result = true
-                dispatch_async(dispatch_get_main_queue(), {
-                    self.saveContext()
-                })
+                DispatchQueue.main.async {
+                    result = self.saveContext()
+                }
             }
             catch {
                 let nserror = error as NSError
@@ -257,30 +261,29 @@ struct MWDBHelper {
         return result
     }
     
-    func saveThreadContext(context: NSManagedObjectContext, completion: ((error: NSError?)->Void)?) {
+    func saveThreadContext(context: NSManagedObjectContext, completion: ((_ error: NSError?)->Void)?) {
         let managedObjectContext = context
         managedObjectContext.mergePolicy = mergePolicy
-        managedObjectContext.performBlock {
+        managedObjectContext.perform {
             
             if !managedObjectContext.hasChanges {
-                completion?(error: nil)
+                completion?(nil)
                 return
             }
             
             do {
                 try managedObjectContext.save()
-
-                dispatch_async(dispatch_get_main_queue(), {
-                    self.saveContext()
-                    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), {
-                        completion?(error: nil)
-                    })
-                })
+                DispatchQueue.main.async {
+                    let _ = self.saveContext()
+                    DispatchQueue.global(qos: .default).async {
+                        completion?(nil)
+                    }
+                }
             }
             catch {
                 let nserror = error as NSError
                 NSLog("Unresolved error \(nserror), \(nserror.userInfo)")
-                completion?(error: nserror)
+                completion?(nserror)
             }
         }
     }
@@ -290,8 +293,8 @@ struct MWDBHelper {
 
 private extension MWDBHelper {
     
-    func countForEntity(entityName: String, predicate: NSPredicate?) -> NSFetchRequest {
-        let fetchRequest = NSFetchRequest(entityName: entityName)
+    func countForEntity(entityName: String, predicate: NSPredicate?) -> NSFetchRequest<NSFetchRequestResult> {
+        let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: entityName)
         fetchRequest.predicate = predicate
         return fetchRequest
     }
@@ -300,9 +303,9 @@ private extension MWDBHelper {
                         predicate: NSPredicate? = nil,
                         sort: NSSortDescriptor? = nil,
                         pageSize: Int = 0,
-                        pageIndex: Int = 0) -> NSFetchRequest {
+                        pageIndex: Int = 0) -> NSFetchRequest<NSFetchRequestResult> {
             
-        let fetchRequest = NSFetchRequest(entityName: entityName)
+        let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: entityName)
         fetchRequest.returnsObjectsAsFaults = false
         fetchRequest.predicate = predicate
         fetchRequest.sortDescriptors = sort == nil ? nil : [sort!]
