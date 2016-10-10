@@ -80,5 +80,13 @@ struct MWUtil {
         let userinfo : [NSObject: AnyObject] = [NSLocalizedDescriptionKey as NSObject: description]
         return NSError(domain: domain, code: code, userInfo: userinfo)
     }
+    
+    static func stringFromDate(date: Date, format: String = "yyyy-MM-dd") -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = format
+        formatter.locale = Locale.current
+        
+        return formatter.string(from: date)
+    }
 }
 
