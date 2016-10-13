@@ -88,5 +88,13 @@ struct MWUtil {
         
         return formatter.string(from: date)
     }
+    
+    static func alert(message: String, viewController: UIViewController) {
+        let alertController = UIAlertController(title: nil, message: message, preferredStyle: .alert)
+        let action = UIAlertAction(title: "知道了", style: .default, handler: nil)
+        alertController.addAction(action)
+        viewController.present(alertController, animated: true, completion: nil)
+        
+    }
 }
 
