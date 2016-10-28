@@ -16,7 +16,9 @@ class KeyboardHelper {
     
     var originInset: UIEdgeInsets?
     
-    init(rootView: UIView, scrollView: UIScrollView, inputView: UIView, bottomMargin: CGFloat) {
+    var debug = false
+    
+    init(rootView: UIView, scrollView: UIScrollView, inputView: UIView, bottomMargin: CGFloat = 0) {
         self.inputArea = inputView
         self.rootView = rootView
         self.scrollView = scrollView
@@ -36,36 +38,48 @@ class KeyboardHelper {
     @objc func keyboardWillShow(_ notification: Notification) {
         if let rect = (notification.userInfo?[UIKeyboardFrameEndUserInfoKey] as? NSValue)?.cgRectValue {
             
+            let padding = max(scrollView.frame.height - scrollView.contentInset.top - scrollView.contentInset.bottom - scrollView.contentSize.height, 0)
+            
+            printDebug("padding = \(padding), contentSize: \(scrollView.contentSize)")
+            
             let scrollVisibleArea = scrollView.convert(scrollView.frame, to: rootView)
             
-            print("scroll frame in root view : \(scrollVisibleArea)")
+            printDebug("scroll frame in root view : \(scrollVisibleArea)")
             
             let rootViewVisible = CGRect(x: rootView.bounds.origin.x,
                                          y: rootView.bounds.origin.y,
                                          width: rootView.bounds.width,
-                                         height: rootView.bounds.height - bottomMargin)
+                                         height: rootView.bounds.height)
             
-            print("root visible area : \(rootViewVisible)")
+            printDebug("root visible area : \(rootViewVisible)")
             
-            let visibleArea = rootViewVisible.intersection(scrollVisibleArea).intersection(rect)
+            printDebug("keyboard size : \(rect)")
             
-            print("visible area : \(visibleArea)")
+            var visibleArea = rootViewVisible.intersection(scrollVisibleArea)
+            
+            printDebug("intersected keyboard size : \(visibleArea)")
+            
+            visibleArea = CGRect(origin: visibleArea.origin, size: CGSize(width: visibleArea.width, height: visibleArea.height - rect.height))
+            
+            printDebug("visible area : \(visibleArea)")
             
             let inputArea = self.inputArea.convert(self.inputArea.bounds, to: rootView)
             
-            print("input area : \(inputArea)")
+            printDebug("input area : \(inputArea)")
             
             if !visibleArea.contains(inputArea) {
                 
                 var inset = scrollView.contentInset
                 originInset = inset
                 
-                print("diff is : \(inputArea.maxY - visibleArea.maxY)")
-                inset.bottom += inputArea.maxY - visibleArea.maxY
+                printDebug("origin inset : \(inset)")
+                
+                printDebug("diff is : \(inputArea.maxY - visibleArea.maxY)")
+                inset.bottom += inputArea.maxY - visibleArea.maxY + padding + bottomMargin
                 
                 scrollView.contentInset = inset
                 
-                print("scrollview inset : \(scrollView.contentInset)")
+                printDebug("scrollview inset : \(scrollView.contentInset)")
             }
         }
     }
@@ -75,5 +89,10 @@ class KeyboardHelper {
             scrollView.contentInset = originInset
         }
     }
-
+    
+    func printDebug(_ message: String) {
+        if debug {
+            print(message)
+        }
+    }
 }
