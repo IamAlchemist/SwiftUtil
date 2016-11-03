@@ -26,6 +26,7 @@ class KeyboardHelper {
     }
     
     func registerToNotificationCenter() {
+        print("register");
         NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillShow(_:)), name: .UIKeyboardWillShow, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillHide(_:)), name: .UIKeyboardWillHide, object: nil)
     }
@@ -37,7 +38,10 @@ class KeyboardHelper {
     
     @objc func keyboardWillShow(_ notification: Notification) {
         if let rect = (notification.userInfo?[UIKeyboardFrameEndUserInfoKey] as? NSValue)?.cgRectValue {
+            if originInset != nil { return }
+            
             originInset = scrollView.contentInset
+            print("origin inset : \(originInset?.bottom)")
             var inset = scrollView.contentInset
             inset.bottom += rect.height
             scrollView.contentInset = inset
