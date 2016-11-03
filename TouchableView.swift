@@ -35,7 +35,6 @@ class TouchableView: UIView {
     }
     
     func tapped(gesture: UIGestureRecognizer) {
-        print("tapped")
         delegate?.touchableViewTapped(view: self)
     }
     
