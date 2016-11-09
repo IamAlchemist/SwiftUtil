@@ -9,10 +9,10 @@
 import UIKit
 
 struct MWUIKitHelper {
-    public static func toolBarFor(action:Selector) -> UIToolbar {
+    static func toolBarFor(target: Any?, action:Selector) -> UIToolbar {
         let toolBar = UIToolbar(frame: CGRect(x: 0, y: 0, width: 320, height: 44))
         toolBar.tintColor = UIColor.gray
-        let doneBtn = UIBarButtonItem(title: "完成", style: .done, target: self, action: action)
+        let doneBtn = UIBarButtonItem(title: "完成", style: .done, target: target, action: action)
         let space = UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: nil, action: nil)
         toolBar.items = [space, doneBtn]
         
