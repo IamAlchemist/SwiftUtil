@@ -125,5 +125,23 @@ struct MWUtil {
             alpha: CGFloat(1.0)
         )
     }
+    
+    static func transformToPingYin(source: String, withSpace: Bool = false) -> String? {
+        let str = NSMutableString(string: source) as CFMutableString
+        
+        if CFStringTransform(str, nil, kCFStringTransformMandarinLatin, false) {
+            if CFStringTransform(str, nil, kCFStringTransformStripDiacritics, false) {
+                let result = str as String
+                if withSpace {
+                    return result
+                }
+                else {
+                    return result.replacingOccurrences(of: " ", with: "")
+                }
+            }
+        }
+        
+        return nil
+    }
 }
 
