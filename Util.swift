@@ -143,5 +143,14 @@ struct MWUtil {
         
         return nil
     }
+    
+    static func urlFrom(string: String) -> URL? {
+        if let url = URL(string: string) {
+            return url
+        }
+        
+        let urlString = string.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? string
+        return URL(string: urlString)
+    }
 }
 
