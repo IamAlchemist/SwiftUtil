@@ -126,7 +126,7 @@ struct MWUtil {
         )
     }
     
-    static func transformToPingYin(source: String, withSpace: Bool = false) -> String? {
+    static func pinyinFrom(source: String, withSpace: Bool = false) -> String? {
         let str = NSMutableString(string: source) as CFMutableString
         
         if CFStringTransform(str, nil, kCFStringTransformMandarinLatin, false) {
