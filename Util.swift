@@ -104,7 +104,7 @@ struct MWUtil {
         navigationBar.titleTextAttributes = dict
     }
     
-    static func hexStringToUIColor (hex:String) -> UIColor {
+    static func colorFrom(hex:String) -> UIColor {
         var cString:String = hex.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
         
         if (cString.hasPrefix("#")) {
