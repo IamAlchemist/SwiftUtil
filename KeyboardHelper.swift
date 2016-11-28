@@ -13,16 +13,18 @@ class KeyboardHelper {
     weak var scrollView: UIScrollView!
     weak var rootView: UIView!
     let bottomMargin: CGFloat
+    let shouldScroll: Bool
     
     var originInset: UIEdgeInsets?
     
     var debug = false
     
-    init(rootView: UIView, scrollView: UIScrollView, inputView: UIView, bottomMargin: CGFloat = 0) {
+    init(rootView: UIView, scrollView: UIScrollView, inputView: UIView, bottomMargin: CGFloat = 0, shouldScroll: Bool = false) {
         self.inputArea = inputView
         self.rootView = rootView
         self.scrollView = scrollView
         self.bottomMargin = bottomMargin
+        self.shouldScroll = shouldScroll
     }
     
     func registerToNotificationCenter() {
@@ -44,7 +46,9 @@ class KeyboardHelper {
             inset.bottom += rect.height
             scrollView.contentInset = inset
             
-            scrollView.scrollRectToVisible(inputArea.frame, animated: true)
+            if shouldScroll {
+                scrollView.scrollRectToVisible(inputArea.frame, animated: false)
+            }
         }
     }
     
