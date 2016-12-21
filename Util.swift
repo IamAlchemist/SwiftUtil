@@ -152,5 +152,13 @@ struct MWUtil {
         let urlString = string.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? string
         return URL(string: urlString)
     }
+    
+    static func appVersion() -> String {
+        return (Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String) ?? "0"
+    }
+    
+    static func appBuild() -> String {
+        return (Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String) ?? "0"
+    }
 }
 
