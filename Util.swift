@@ -1,6 +1,5 @@
 //
 //  Util.swift
-//  H5Cache
 //
 //  Created by wizard lee on 8/12/16.
 //  Copyright © 2016 wizard lee. All rights reserved.

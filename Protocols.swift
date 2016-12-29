@@ -1,9 +1,8 @@
 //
 //  Protocols.swift
-//  ZaChatiOS
 //
 //  Created by wizard lee on 28/12/2016.
-//  Copyright © 2016 zhongan. All rights reserved.
+//  Copyright © 2016 wizard lee. All rights reserved.
 //
 
 import Foundation

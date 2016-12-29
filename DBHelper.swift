@@ -1,6 +1,5 @@
 //
 //  DBHelper.swift
-//  SwiftUtilExample
 //
 //  Created by wizard lee on 8/20/16.
 //  Copyright © 2016 wizard lee. All rights reserved.

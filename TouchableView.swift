@@ -1,9 +1,8 @@
 //
 //  TouchableView.swift
-//  ZaChatiOS
 //
 //  Created by wizard lee on 10/28/16.
-//  Copyright © 2016 zhongan. All rights reserved.
+//  Copyright © 2016 wizard lee. All rights reserved.
 //
 
 import UIKit
