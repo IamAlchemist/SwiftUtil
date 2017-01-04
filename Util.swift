@@ -11,27 +11,6 @@ import CleanroomLogger
 #endif
 import CoreData
 
-struct HulkColorTable : ColorTable {
-    func foreground(forSeverity severity: LogSeverity) -> Color? {
-        switch severity {
-        case .verbose:
-            return Color(r: 64, g: 64, b: 64)
-        case .debug:
-            return Color(r: 128, g: 128, b: 128)
-        case .info:
-            return Color(r: 0, g: 184, b: 254)
-        case .warning:
-            return Color(r: 214, g: 134, b: 47)
-        case .error:
-            return Color(r: 185, g: 81, b: 46)
-        }
-    }
-    
-    func background(forSeverity severity: LogSeverity) -> Color? {
-        return nil
-    }
-}
-
 struct MWUtil {
     static func applicationDocumentsDirectory() -> NSURL {
         return FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).last! as NSURL
@@ -70,8 +49,8 @@ struct MWUtil {
     
     static func setupCleanRoomLogger() {
         setenv("XcodeColors", "YES", 0);
-        let formatter = XcodeLogFormatter(timestampStyle: .`default`, severityStyle: .xcode, delimiterStyle: nil, showCallSite: true, showCallingThread: false, colorizer: nil)
-        let config = XcodeLogConfiguration(minimumSeverity: .verbose, colorTable: HulkColorTable(), formatter: formatter)
+        let formatter = XcodeLogFormatter()
+        let config = XcodeLogConfiguration(minimumSeverity: .verbose, logToASL: false, formatter: formatter)
         Log.enable(configuration: config)
     }
     
