@@ -15,7 +15,14 @@ struct MWDBHelper {
     let managedObjectContext: NSManagedObjectContext
     let mergePolicy: AnyObject
     
-    private let MOC_KEY : NSString = "H5CACHE_MOC_KEY"
+    private let MOC_KEY : NSString
+    
+    init(managedObjectContext: NSManagedObjectContext, mergePolicy: AnyObject = NSMergeByPropertyObjectTrumpMergePolicy, moc_key: String = "MWUtil_MOC"){
+        self.managedObjectContext = managedObjectContext
+        self.mergePolicy = mergePolicy
+        self.MOC_KEY = moc_key as! NSString
+    }
+    
     var currentManagedObjectContext: NSManagedObjectContext {
         get {
             let thisThread = Thread.current
@@ -37,11 +44,6 @@ struct MWDBHelper {
         }
     }
     
-    init(managedObjectContext: NSManagedObjectContext, mergePolicy: AnyObject = NSMergeByPropertyObjectTrumpMergePolicy){
-        self.managedObjectContext = managedObjectContext
-        self.mergePolicy = mergePolicy
-    }
-
     func countForEntity(entityName: String, predicate: NSPredicate? = nil, completion: ((Int, NSError?)->Void)?) {
 
         let moc = currentManagedObjectContext
