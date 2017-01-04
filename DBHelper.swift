@@ -20,7 +20,7 @@ struct MWDBHelper {
     init(managedObjectContext: NSManagedObjectContext, mergePolicy: AnyObject = NSMergeByPropertyObjectTrumpMergePolicy, moc_key: String = "MWUtil_MOC"){
         self.managedObjectContext = managedObjectContext
         self.mergePolicy = mergePolicy
-        self.MOC_KEY = moc_key as! NSString
+        self.MOC_KEY = moc_key as NSString
     }
     
     var currentManagedObjectContext: NSManagedObjectContext {
