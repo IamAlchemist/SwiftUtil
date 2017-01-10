@@ -49,8 +49,7 @@ struct MWUtil {
     
     static func setupCleanRoomLogger() {
         setenv("XcodeColors", "YES", 0);
-        let formatter = XcodeLogFormatter()
-        let config = XcodeLogConfiguration(minimumSeverity: .verbose, logToASL: false, formatter: formatter)
+        let config = XcodeLogConfiguration()
         Log.enable(configuration: config)
     }
     
